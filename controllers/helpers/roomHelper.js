@@ -53,7 +53,7 @@ const calculateClosestAvailableSlot = (
           createDateObject(
             `${currentTime.getFullYear()}-${String(
               currentTime.getMonth() + 1
-            ).padStart(2, "0")}-${currentTime.getUTCDate()}`,
+            ).padStart(2, "0")}-${currentTime.getDate()}`,
             sessions[sessions.length - 1].endTime
           ) < currentTime
         ) {
@@ -72,8 +72,9 @@ const calculateClosestAvailableSlot = (
                   )
                 )
           );
+
           if (!bookingExists) {
-            return `Available after ${getDifferenceInMinutes(
+            const nextAvailableSlotDifference = getDifferenceInMinutes(
               createDateObject(
                 `${currentTime.getFullYear()}-${String(
                   currentTime.getMonth() + 1
@@ -81,7 +82,14 @@ const calculateClosestAvailableSlot = (
                 sessions[j].startTime
               ),
               currentTime
-            )} minutes`;
+            );
+            if (Math.floor(nextAvailableSlotDifference / 60) === 0) {
+              return `Available after ${nextAvailableSlotDifference % 60}`;
+            } else {
+              return `Available after ${Math.floor(
+                nextAvailableSlotDifference / 60
+              )} hours and ${nextAvailableSlotDifference % 60} minutes`;
+            }
           }
         }
       } else {
