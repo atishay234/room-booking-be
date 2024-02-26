@@ -9,8 +9,6 @@ const bookingDetailsSchema = new mongoose.Schema({
   },
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   date: { type: Date, required: true },
-  isAvailable: { type: Boolean, default: true },
-  nextAvailableTime: { type: Date },
 });
 
 const BookingDetails = mongoose.model("BookingDetails", bookingDetailsSchema);

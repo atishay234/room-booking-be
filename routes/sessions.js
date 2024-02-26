@@ -1,8 +1,8 @@
 const express = require("express");
-const router = express.Router();
 const sessionController = require("../controllers/sessionController");
 
-// Route: GET all sessions
+const router = express.Router();
+
 router.get("/", sessionController.getAllSessions);
 
 module.exports = router;

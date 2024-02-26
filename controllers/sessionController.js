@@ -1,6 +1,5 @@
 const Session = require("../models/session");
 
-// Example: Get all sessions
 exports.getAllSessions = async (req, res) => {
   try {
     const sessions = await Session.find();

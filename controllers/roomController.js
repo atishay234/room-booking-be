@@ -1,9 +1,28 @@
-// controllers/roomController.js
+const BookingDetails = require("../models/bookingDetails");
 const Room = require("../models/room");
+const Session = require("../models/session");
+const {
+  createDateObject,
+  calculateClosestAvailableSlot,
+} = require("./helpers/roomHelper.js");
 
 exports.getAllRooms = async (req, res) => {
   try {
-    const currentTime = new Date();
+    const { query } = req.query;
+
+    const regex = new RegExp(query, "i");
+    const queryWords = query.split(/\s+/);
+
+    const queryConditions = queryWords.map((word) => ({
+      $or: [
+        { name: { $regex: new RegExp(word, "i") } },
+        { capacity: { $gte: parseInt(word) - 20, $lte: parseInt(word) + 20 } },
+        { "tagsData.name": { $regex: new RegExp(word, "i") } },
+      ],
+    }));
+
+    const filter = { $and: queryConditions };
+
     const rooms = await Room.aggregate([
       {
         $lookup: {
@@ -13,21 +32,10 @@ exports.getAllRooms = async (req, res) => {
           as: "tagsData",
         },
       },
+      { $match: filter },
     ]);
 
-    const roomsWithAvailability = rooms.map((room) => {
-      const nextAvailableSlot = calculateNextAvailableSlot(
-        room.sessions,
-        currentTime
-      );
-
-      return {
-        ...room,
-        availability: nextAvailableSlot,
-      };
-    });
-
-    res.status(200).json(roomsWithAvailability);
+    res.status(200).json(rooms);
   } catch (error) {
     console.log(error);
     res.status(500).json({
@@ -36,35 +44,55 @@ exports.getAllRooms = async (req, res) => {
     });
   }
 };
+exports.getClosestAvailableSlots = async (req, res) => {
+  try {
+    const currentTime = new Date();
+    const rooms = await Room.find();
+    const sessions = await Session.find();
 
-// Helper function to calculate the next available slot
-const calculateNextAvailableSlot = (sessions, currentTime) => {
-  const sortedSessions = sessions?.sort((a, b) => a.startTime - b.startTime);
-  if (sortedSessions) {
-    for (const session of sortedSessions) {
-      if (session.startTime > currentTime) {
-        const timeDifference = session.startTime - currentTime;
-        const minutesDifference = Math.ceil(timeDifference / (1000 * 60));
+    const currentSessionIndex = sessions.findIndex((session) => {
+      return (
+        createDateObject(
+          `${currentTime.getFullYear()}-${String(
+            currentTime.getMonth() + 1
+          ).padStart(2, "0")}-${currentTime.getUTCDate()}`,
+          session.startTime
+        ) < currentTime &&
+        createDateObject(
+          `${currentTime.getFullYear()}-${String(
+            currentTime.getMonth() + 1
+          ).padStart(2, "0")}-${currentTime.getUTCDate()}`,
+          session.endTime
+        ) > currentTime
+      );
+    });
 
-        if (minutesDifference <= 30) {
-          return `Available after ${minutesDifference} minutes`;
-        } else {
-          const tomorrow = new Date(currentTime);
-          tomorrow.setDate(currentTime.getDate() + 1);
-          return `Available tomorrow at ${formatTime(session.startTime)}`;
-        }
-      }
-    }
+    const roomsWithClosestSlots = await Promise.all(
+      rooms.map(async (room) => {
+        const bookingDetails = await BookingDetails.find({ room: room._id });
+        const closestSlot = calculateClosestAvailableSlot(
+          bookingDetails,
+          currentTime,
+          sessions,
+          currentSessionIndex
+        );
+
+        return {
+          [room._id]: closestSlot,
+        };
+      })
+    );
+
+    const response = roomsWithClosestSlots.reduce((acc, room) => {
+      return { ...acc, ...room };
+    }, {});
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      status: "error",
+      message: "Internal server error",
+    });
   }
-
-  return "Available";
-};
-
-// Helper function to format time (assuming startTime is in minutes)
-const formatTime = (startTime) => {
-  const hours = Math.floor(startTime / 60);
-  const mins = startTime % 60;
-  return `${hours.toString().padStart(2, "0")}:${mins
-    .toString()
-    .padStart(2, "0")}`;
 };

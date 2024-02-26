@@ -1,8 +1,9 @@
 const express = require("express");
-const router = express.Router();
 const roomController = require("../controllers/roomController");
 
-// Route: GET all rooms
+const router = express.Router();
+
 router.get("/", roomController.getAllRooms);
+router.get("/closest-available-slot", roomController.getClosestAvailableSlots);
 
 module.exports = router;

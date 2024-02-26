@@ -1,4 +1,3 @@
-// index.js
 const express = require("express");
 const mongoose = require("mongoose");
 const sessionRoutes = require("./routes/sessions");
@@ -6,15 +5,11 @@ const roomRoutes = require("./routes/rooms");
 const bookingDetailsRoutes = require("./routes/bookingDetails");
 const tagRoutes = require("./routes/tags");
 const indexRoute = require("./routes/index");
-const {
-  generateTemporaryToken,
-  authMiddleware,
-} = require("./middleware/authMiddleware");
+const { authMiddleware } = require("./middleware/authMiddleware");
 const cors = require("cors");
 
 const app = express();
 
-// Connect to MongoDB
 mongoose.connect("mongodb://localhost:27017/roomizza", {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -30,8 +25,6 @@ mongoose.connection.on("error", (err) => {
 
 app.use(cors());
 app.use(express.json());
-
-// Include authMiddleware before routes
 
 app.use("/", indexRoute);
 
