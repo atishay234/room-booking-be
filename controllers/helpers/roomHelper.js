@@ -84,7 +84,9 @@ const calculateClosestAvailableSlot = (
               currentTime
             );
             if (Math.floor(nextAvailableSlotDifference / 60) === 0) {
-              return `Available after ${nextAvailableSlotDifference % 60}`;
+              return `Available after ${
+                nextAvailableSlotDifference % 60
+              } minutes`;
             } else {
               return `Available after ${Math.floor(
                 nextAvailableSlotDifference / 60

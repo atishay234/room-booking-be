@@ -5,6 +5,7 @@ const roomRoutes = require("./routes/rooms");
 const bookingDetailsRoutes = require("./routes/bookingDetails");
 const tagRoutes = require("./routes/tags");
 const indexRoute = require("./routes/index");
+const imageRoutes = require("./routes/images");
 const { authMiddleware } = require("./middleware/authMiddleware");
 const cors = require("cors");
 
@@ -32,6 +33,7 @@ app.use("/api/sessions", authMiddleware, sessionRoutes);
 app.use("/api/rooms", authMiddleware, roomRoutes);
 app.use("/api/booking-details", authMiddleware, bookingDetailsRoutes);
 app.use("/api/tags", authMiddleware, tagRoutes);
+app.use("/api/images", authMiddleware, imageRoutes);
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
